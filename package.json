@@ -6,7 +6,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "compile": "node ethereum/compile.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "predeploy": "node compile.js",
+    "deploy": "node deploy.js"
   },
   "author": "Syntract",
   "license": "ISC",
