@@ -1,5 +1,5 @@
 pragma solidity >=0.4.22 <0.7.0;
-
+pragma experimental ABIEncoderV2;
 /**
  * @title Ballot
  * @dev Implements voting process along with vote delegation
@@ -64,6 +64,22 @@ contract SynElection {
         voters[voter].weight = 1;
     }
 
+    function stopElection() public {
+        require(
+            msg.sender == manager,
+            "Only manager can stop the election."
+        );
+        stopVote=true;
+    }
+
+    function debugRestartElection() public {
+        require(
+            msg.sender == manager,
+            "Only manager can restart session."
+        );
+        stopVote=false;
+    }
+
     /**
      * @dev Give your vote (including votes delegated to you) to proposal 'proposals[proposal].name'.
      * @param proposal index of proposal in the proposals array
@@ -81,36 +97,12 @@ contract SynElection {
         // changes.
         proposals[proposal].voteCount += sender.weight;
     }
-
-    /**
-     * @dev Computes the winning proposal taking all previous votes into account.
-     * @return winningProposal_ index of winning proposal in the proposals array
-     */
-    function winningProposal() public view
-            returns (uint winningProposal_)
+    
+    function getResults() public view
+        returns (Proposal[] memory results)
     {
-        uint winningVoteCount = 0;
-        for (uint p = 0; p < proposals.length; p++) {
-            if (proposals[p].voteCount > winningVoteCount) {
-                winningVoteCount = proposals[p].voteCount;
-                winningProposal_ = p;
-            }
-        }
-    }
-
-    /**
-     * @dev Calls winningProposal() function to get the index of the winner contained in the proposals array and then
-     * @return winnerName_ the name of the winner
-     */
-    function winnerName() public view
-            returns (bytes32 winnerName_)
-    {
-        winnerName_ = proposals[winningProposal()].name;
-    }
-
-    function stopElection() public {
         require(msg.sender==manager);
-        stopVote=true;
+        results = proposals;
     }
     
     function getProposals() public view
