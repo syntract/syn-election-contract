@@ -7,9 +7,7 @@ pragma experimental ABIEncoderV2;
 contract SynElection {
 
     struct Voter {
-        uint weight; // weight is accumulated by delegation
         bool voted;  // if true, that person already voted
-        uint vote;   // index of the voted proposal
     }
 
     struct Proposal {
@@ -19,7 +17,7 @@ contract SynElection {
         uint voteCount; // number of accumulated votes
     }
 
-    address public manager;
+    address public owner;
 
     mapping(address => Voter) public voters;
 
@@ -32,8 +30,7 @@ contract SynElection {
      * @param proposalNames names of proposals
      */
     constructor(bytes32[] memory proposalNames) public {
-        manager = msg.sender;
-        voters[manager].weight = 1;
+        owner = msg.sender;
         stopVote = false;
 
         for (uint i = 0; i < proposalNames.length; i++) {
@@ -47,35 +44,18 @@ contract SynElection {
         }
     }
 
-    /**
-     * @dev Give 'voter' the right to vote on this ballot. May only be called by 'manager'.
-     * @param voter address of voter
-     */
-    function giveRightToVote(address voter) public {
-        require(
-            msg.sender == manager,
-            "Only manager can give right to vote."
-        );
-        require(
-            !voters[voter].voted,
-            "The voter already voted."
-        );
-        require(voters[voter].weight == 0);
-        voters[voter].weight = 1;
-    }
-
     function stopElection() public {
         require(
-            msg.sender == manager,
-            "Only manager can stop the election."
+            msg.sender == owner,
+            "Only owner can stop the election."
         );
         stopVote=true;
     }
 
     function debugRestartElection() public {
         require(
-            msg.sender == manager,
-            "Only manager can restart session."
+            msg.sender == owner,
+            "Only owner can restart session."
         );
         stopVote=false;
     }
@@ -87,21 +67,19 @@ contract SynElection {
     function vote(uint proposal) public {
         require(!stopVote, "The election is closed");
         Voter storage sender = voters[msg.sender];
-        require(sender.weight != 0, "Has no right to vote");
         require(!sender.voted, "Already voted.");
         sender.voted = true;
-        sender.vote = proposal;
 
         // If 'proposal' is out of the range of the array,
         // this will throw automatically and revert all
         // changes.
-        proposals[proposal].voteCount += sender.weight;
+        proposals[proposal].voteCount += 1;
     }
     
     function getResults() public view
         returns (Proposal[] memory results)
     {
-        require(msg.sender==manager);
+        require(msg.sender==owner);
         results = proposals;
     }
     
